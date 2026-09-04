@@ -25,8 +25,6 @@ on:
           required: true
         DOCKERHUB_TOKEN:
           required: true
-        OPEN_API_KEY:
-          required: true
         ENV_FILE_BASE64:
           required: true
 
@@ -57,7 +55,7 @@ jobs:
           OPEN_API_KEY: ${{ secrets.OPEN_API_KEY }}
         run: |
           docker run --rm \
-           -e OPEN_API_KEY="$OPEN_API_KEY" \
+            --env-file .env \
             -v ${{ github.workspace }}/playwright-report:/app/playwright-report \
             -v ${{ github.workspace }}/allure-results:/app/allure-results \
             181221/playwright-framework:${{ inputs.image-tag }} \
