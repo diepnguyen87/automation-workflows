@@ -25,6 +25,8 @@ on:
           required: true
         DOCKERHUB_TOKEN:
           required: true
+        OPEN_API_KEY:
+          required: true
 
 jobs:
   execute-playwright:
@@ -46,8 +48,11 @@ jobs:
         run: docker pull 181221/playwright-framework:${{ inputs.image-tag }}
 
       - name: Run Playwright Tests
+        env: 
+          OPEN_API_KEY: ${{ secrets.OPEN_API_KEY }}
         run: |
           docker run --rm \
+           -e OPEN_API_KEY="$OPEN_API_KEY" \
             -v ${{ github.workspace }}/playwright-report:/app/playwright-report \
             -v ${{ github.workspace }}/allure-results:/app/allure-results \
             181221/playwright-framework:${{ inputs.image-tag }} \
