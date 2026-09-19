@@ -33,7 +33,7 @@ on:
 
 jobs:
   execute-playwright:
-    name: Execute Playwright
+    name: Executing
     runs-on: ${{ inputs.runner }}
     timeout-minutes: 30
 
