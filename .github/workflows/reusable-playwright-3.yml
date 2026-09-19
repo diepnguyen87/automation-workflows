@@ -7,6 +7,7 @@ on:
           required: true
           type: string
         suite:
+          required: true
           type: string
         runner:
           type: string
@@ -21,6 +22,8 @@ on:
           required: true
         ENV_FILE_BASE64:
           required: true
+permissions:
+  contents: write
 
 jobs:
   execute-playwright:
@@ -60,6 +63,16 @@ jobs:
           name: ${{ inputs.suite }}-report
           path: playwright-report
           retention-days: 7
+
+      - name: Deploy to GitHub Pages                                                                                                                                
+        if: always()                                                                                                                                                
+        uses: peaceiris/actions-gh-pages@v4                                                                                                                         
+        with:                                                                                                                                                       
+          github_token: ${{ secrets.GITHUB_TOKEN }}                                                                                                                 
+          publish_branch: gh-pages                                                                                                                                  
+          publish_dir: playwright-report                                                                                                                            
+          destination_dir: ${{ inputs.suite }}                                                                                             
+          keep_files: true   
 
       - name: Notify Slack
         if: always()
