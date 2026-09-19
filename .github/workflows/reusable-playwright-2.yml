@@ -1,4 +1,4 @@
-name: Reusable Playwright
+name: Reusable Playwright with Matrix
 
 on:
   workflow_call:
@@ -12,6 +12,9 @@ on:
         engine:
           required: true
           type: string
+        credential-index:
+          required: true
+          type: number
         suite:
           type: string
         runner:
@@ -52,10 +55,11 @@ jobs:
 
       - name: Run Playwright Tests
         env: 
-          OPEN_API_KEY: ${{ secrets.OPEN_API_KEY }}
+          CREDENTIAL_INDEX: ${{ inputs.credential-index }}
         run: |
           docker run --rm \
             --env-file .env \
+            -e CREDENTIAL_INDEX \
             -v ${{ github.workspace }}/playwright-report:/app/playwright-report \
             -v ${{ github.workspace }}/allure-results:/app/allure-results \
             181221/playwright-framework:${{ inputs.image-tag }} \
