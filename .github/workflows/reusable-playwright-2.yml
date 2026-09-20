@@ -9,9 +9,6 @@ on:
         browser:
           required: true
           type: string
-        engine:
-          required: true
-          type: string
         credential-index:
           required: true
           type: number
