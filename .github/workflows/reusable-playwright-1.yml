@@ -28,7 +28,7 @@ jobs:
 
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Playwright environment
         uses: ./.github/actions/setup-playwright.yml
@@ -41,7 +41,7 @@ jobs:
 
       - name: Upload Playwright HTML Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ inputs.suite }}-${{ inputs.browser }}-report
           path: playwright-report
