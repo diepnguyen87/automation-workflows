@@ -71,16 +71,6 @@ jobs:
           path: playwright-report
           retention-days: 7
                                                                                                                                                                     
-      - name: Deploy to GitHub Pages                                                                                                                                
-        if: always()                                                                                                                                                
-        uses: peaceiris/actions-gh-pages@v4                                                                                                                         
-        with:                                                                                                                                                       
-          github_token: ${{ secrets.GITHUB_TOKEN }}                                                                                                                 
-          publish_branch: gh-pages                                                                                                                                  
-          publish_dir: playwright-report                                                                                                                            
-          destination_dir: ${{ inputs.suite }}-${{ inputs.browser }}                                                                                                
-          keep_files: true   
-
       - name: Notify Slack
         if: always()
         uses: slackapi/slack-github-action@v3.0.3
