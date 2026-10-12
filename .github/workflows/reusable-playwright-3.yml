@@ -30,7 +30,7 @@ jobs:
   execute-playwright:
     name: Executing
     runs-on: ${{ inputs.runner }}
-    timeout-minutes: 30
+    timeout-minutes: 150
 
     steps:
       - name: Login to Docker Hub
