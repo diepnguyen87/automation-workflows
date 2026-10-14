@@ -1,0 +1,90 @@
+name: Reusable Playwright with Sharding
+
+on:
+  workflow_call:
+    inputs:
+        command:
+          required: true
+          type: string
+        suite:
+          required: true
+          type: string
+        shard-index:
+          required: true
+          type: number
+        shard-total:
+          required: true
+          type: number
+        credential-index:
+          required: true
+          type: number
+        runner:
+          type: string
+        image-tag:
+          type: string
+    secrets:
+        SLACK_WEBHOOK_URL:
+          required: true
+        DOCKERHUB_USERNAME:
+          required: true
+        DOCKERHUB_TOKEN:
+          required: true
+        ENV_FILE_BASE64:
+          required: true
+
+permissions:
+  contents: write
+
+jobs:
+  execute-playwright:
+    name: Executing
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: 30
+
+    steps:
+      - name: Login to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Pull Image
+        run: docker pull 181221/playwright-framework:${{ inputs.image-tag }}
+
+      - name: Create .env file
+        run: echo "${{ secrets.ENV_FILE_BASE64 }}" | base64 -d > .env
+
+      - name: Run Playwright Tests
+        env:
+          CREDENTIAL_INDEX: ${{ inputs.credential-index }}
+        run: |
+          docker run --rm \
+            --env-file .env \
+            -e CREDENTIAL_INDEX \
+            -v ${{ github.workspace }}/blob-report:/app/blob-report \
+            181221/playwright-framework:${{ inputs.image-tag }} \
+            yarn ${{ inputs.command }} --shard=${{ inputs.shard-index }}/${{ inputs.shard-total }} --fully-parallel --reporter=blob
+
+      - name: Upload Blob Report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ inputs.suite }}-blob-report-${{ inputs.shard-index }}
+          path: blob-report
+          retention-days: 1
+
+      - name: Notify Slack
+        if: always()
+        uses: slackapi/slack-github-action@v3.0.3
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            text: |
+              ${{ job.status == 'success' && '✅' || '❌' }} Playwright test: ${{ job.status }}
+              Repository: ${{ github.repository }}
+              Branch: ${{ github.ref_name }}
+              Test suite: ${{ inputs.command }}
+              Shard: ${{ inputs.shard-index }}/${{ inputs.shard-total }}
+              Triggered by: ${{ github.actor }}
+              Run details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
