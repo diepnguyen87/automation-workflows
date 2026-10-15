@@ -3,6 +3,9 @@ name: Reusable Playwright
 on:
   workflow_call:
     inputs:
+        environment:
+          type: string
+          default: ""
         command:
           required: true
           type: string
@@ -22,6 +25,11 @@ on:
           required: true
         ENV_FILE_BASE64:
           required: true
+        # Environment secrets: resolved from the caller repo's GitHub Environment set on the job below
+        ENV_FILE_BASE64_SIT:
+          required: false
+        ENV_FILE_BASE64_UAT:
+          required: false
           
 permissions:
   contents: write
@@ -30,6 +38,7 @@ jobs:
   execute-playwright:
     name: Executing
     runs-on: ${{ inputs.runner }}
+    environment: ${{ inputs.environment }}
     timeout-minutes: 150
 
     steps:
@@ -43,7 +52,20 @@ jobs:
         run: docker pull 181221/playwright-framework:${{ inputs.image-tag }}
 
       - name: Create .env file
-        run: echo "${{ secrets.ENV_FILE_BASE64 }}" | base64 -d > .env
+        env:
+          ENVIRONMENT_NAME: ${{ inputs.environment }}
+          SHARED_ENV: ${{ secrets.ENV_FILE_BASE64 }}
+          ENVIRONMENT_ENV: ${{ inputs.environment == 'UAT' && secrets.ENV_FILE_BASE64_UAT || inputs.environment == 'SIT' && secrets.ENV_FILE_BASE64_SIT || '' }}
+        run: |
+          if [ -n "$ENVIRONMENT_NAME" ] && [ -z "$ENVIRONMENT_ENV" ]; then
+            echo "Missing environment secret ENV_FILE_BASE64_$ENVIRONMENT_NAME in environment '$ENVIRONMENT_NAME'"
+            exit 1
+          fi
+          {
+            echo "$SHARED_ENV" | base64 -d
+            echo
+            if [ -n "$ENVIRONMENT_ENV" ]; then echo "$ENVIRONMENT_ENV" | base64 -d; fi
+          } > .env
 
       - name: Run Playwright Tests
         run: |
@@ -73,6 +95,7 @@ jobs:
               ${{ job.status == 'success' && '✅' || '❌' }} Playwright test: ${{ job.status }}
               Repository: ${{ github.repository }}
               Branch: ${{ github.ref_name }}
+              Environment: ${{ inputs.environment }}
               Test suite: ${{ inputs.command }}
               Triggered by: ${{ github.actor }}
               Run details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
