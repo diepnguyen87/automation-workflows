@@ -34,11 +34,6 @@ on:
           required: true
         ENV_FILE_BASE64:
           required: true
-        # Environment secrets: resolved from the caller repo's GitHub Environment set on the job below
-        ENV_FILE_BASE64_SIT:
-          required: false
-        ENV_FILE_BASE64_UAT:
-          required: false
 
 permissions:
   contents: write
